@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: bosch-monitor-job
+  namespace: monitoring
+spec:
+  # Schedule: Minute Hour DayOfMonth Month DayOfWeek (02:00 AM nightly)
+  schedule: "0 22 * * *"
+  # Restart policy: Never, OnFailure, or Always
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: bosch-monitor
+            image: schlachet/bosch-monitor:20260509-05
+            env:
+            - name: BOSCH_CAM0_IP
+              value: "10.0.0.10"
+            - name: BOSCH_CAM0_NAME
+              value: "CAM0"
+            - name: BOSCH_CAM0_PASS
+              value: "password"
+            - name: BOSCH_CAM0_PORT
+              value: "80"
+            - name: BOSCH_CAM0_USER
+              value: "username"
+            - name: BOSCH_CAM1_IP
+              value: "10.0.0.11"
+            - name: BOSCH_CAM1_NAME
+              value: "CAM1"
+            - name: BOSCH_CAM1_PASS
+              value: "password"
+            - name: BOSCH_CAM1_PORT
+              value: "80"
+            - name: BOSCH_CAM1_USER
+              value: "username"
+            - name: BOSCH_EMAIL_FROM_PASS
+              value: "gmail_app_password"
+            - name: BOSCH_EMAIL_FROM
+              value: "from@domain.tld"
+            - name: BOSCH_EMAIL_TO
+              value: "to@domain.tld"
+          restartPolicy: OnFailure
