@@ -1,3 +1,8 @@
+#
+# kill start and end, its kicked off from a job so just
+# configure a DURATION at which it'll kill itself.
+#
+#
 import json, pathlib, smtplib, subprocess, base64, os
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
@@ -5,9 +10,7 @@ from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 
 # ── Config ────────────────────────────────────────────────────────────────────
-NIGHT_START_HOUR = 22
-NIGHT_END_HOUR   = 7
-NIGHT_END_MIN    = 30
+RUN_DURATION_MINS = 2 # 60*10 10 hours
 
 SMTP_HOST  = "smtp.gmail.com"
 SMTP_PORT  = 587
@@ -22,14 +25,10 @@ CLIPS_WARNING   = BASE / "clips" / "front-warning"
 LOG             = BASE / "logs" / "events.jsonl"
 OUT             = BASE / "digest.html"
 
+now = datetime.now()
 
 # ── Load last night's events ──────────────────────────────────────────────────
 def load_events() -> list:
-    now = datetime.now()
-    if now.hour < NIGHT_END_HOUR or (now.hour == NIGHT_END_HOUR and now.minute < NIGHT_END_MIN):
-        start = now.replace(hour=NIGHT_START_HOUR, minute=0, second=0) - timedelta(days=1)
-    else:
-        start = now.replace(hour=NIGHT_START_HOUR, minute=0, second=0)
 
     events = []
     if not LOG.exists():
@@ -43,6 +42,7 @@ def load_events() -> list:
                     events.append(e)
             except Exception:
                 continue
+    LOG.unlink()
     return events
 
 
@@ -102,7 +102,7 @@ def build_rows(events: list) -> str:
 
 # ── Build HTML ────────────────────────────────────────────────────────────────
 def build_html(events: list) -> str:
-    date_str  = datetime.now().strftime("%B %d, %Y")
+    date_str  = now.strftime("%B %d, %Y")
     warnings  = [e for e in events if "warning" in e.get("rule", "").lower()]
     loitering = [e for e in events if "warning" not in e.get("rule", "").lower()]
 

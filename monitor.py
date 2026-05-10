@@ -44,8 +44,10 @@ COOLDOWN_SECS     = 10
 BOSCH_EPOCH       = datetime(2000, 1, 1, tzinfo=timezone.utc)
 
 # ── Schedule ──────────────────────────────────────────────────────────────────
-MONITOR_END_HOUR = 6
-MONITOR_END_MIN  = 30
+# only need to track duration after process starts
+MONITOR_DURATION_SECS = 60*60*9 # 9 hours
+
+execution_start = datetime.now()
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 BASE            = pathlib.Path.home() / "loitering-monitor"
@@ -155,16 +157,18 @@ def log_event(cam: dict, event_utc: datetime, rule: str, local_time: str):
 
 
 # ── Shutdown watcher ──────────────────────────────────────────────────────────
+# execution_start = datetime.now()
 def watch_for_shutdown():
     while True:
-        now = datetime.now()
-        if now.hour == MONITOR_END_HOUR and now.minute >= MONITOR_END_MIN:
-            print(f"\n[monitor] Reached {MONITOR_END_HOUR}:{MONITOR_END_MIN:02d} — launching digest and shutting down...")
+        current_time = datetime.now()
+        tdelta = current_time - execution_start
+        if tdelta.seconds > MONITOR_DURATION_SECS:
+            print(f"\n[monitor] Reached execution end  — launching digest and shutting down...")
             import sys
             subprocess.Popen([sys.executable, str(pathlib.Path(__file__).parent / "digest.py")])
             time.sleep(2)
             os._exit(0)
-        time.sleep(30)  # check every 30 seconds
+        time.sleep(5)  # check every 30 seconds
 
 
 # ── Per-camera monitor loop ───────────────────────────────────────────────────
@@ -227,7 +231,8 @@ if __name__ == "__main__":
     print("Starting loitering monitor...")
     print(f"Clips → {BASE / 'clips'}")
     print(f"Log   → {LOG}")
-    print(f"Runs until {MONITOR_END_HOUR}:{MONITOR_END_MIN:02d}")
+    end_time = execution_start + timedelta(seconds=MONITOR_DURATION_SECS)
+    print(f"Runs until {end_time:%Y-%m-%d %H:%M:%S}")
     print()
 
     # Start shutdown watcher
