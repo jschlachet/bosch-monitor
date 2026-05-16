@@ -45,8 +45,9 @@ BOSCH_EPOCH       = datetime(2000, 1, 1, tzinfo=timezone.utc)
 
 # ── Schedule ──────────────────────────────────────────────────────────────────
 # only need to track duration after process starts
-MONITOR_DURATION_SECS = 60*60*9 # 9 hours
 
+DEFAULT_SECS = 60*60*9 # 9 hours
+MONITOR_DURATION_SECS = int(os.environ.get('DURATION_SECS', DEFAULT_SECS)
 execution_start = datetime.now()
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
